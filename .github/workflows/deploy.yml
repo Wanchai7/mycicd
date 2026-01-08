@@ -29,6 +29,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Diagnostics — check token identity
+        uses: actions/github-script@v6
+        with:
+          # Use the same token the deployment will use (PAGES_PAT if set, otherwise GITHUB_TOKEN)
+          token: ${{ secrets.PAGES_PAT || github.token }}
+          script: |
+            const me = (await github.rest.users.getAuthenticated()).data;
+            console.log(`Authenticated as: ${me.login}`);
+            console.log(`PAGES_PAT set: ${!!process.env.PAGES_PAT}`);
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
@@ -48,3 +58,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # Use a personal access token (PAGES_PAT) if set in Secrets to work
+          # around org/repo policies that prevent the GITHUB_TOKEN from creating
+          # a Pages site. If not set, falls back to the default GITHUB_TOKEN.
+          token: ${{ secrets.PAGES_PAT || github.token }}
